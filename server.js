@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 const registerDetails = require("./registermodel");
 const middleware = require("./middleware");
 const cors = require("cors");
@@ -65,7 +65,7 @@ app.post("/register", async (req, res) => {
     }
 
     if (usertype === "admin") {
-      if (secretkey !== "venkatesh") {
+      if (secretkey !== "svuhostel123") {
         return res
           .status(400)
           .send("Invalid secret key for admin registration");
@@ -148,7 +148,7 @@ app.post("/login", async (req, res) => {
     };
 
     const secret = process.env.JWT_SECRET || "defaultSecret";
-    const expiresIn = 3600;
+    const expiresIn = 36000000;
 
     jwt.sign(payload, secret, { expiresIn }, (err, token) => {
       if (err) {
@@ -376,6 +376,179 @@ app.put("/editprofile/:id", middleware, async (req, res) => {
     return res
       .status(200)
       .json({ message: "Profile updated successfully", user: updatedUser });
+  } catch (error) {
+    console.error("Server error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+// Add hostel mess details route
+app.post("/hostelmess", middleware, async (req, res) => {
+  try {
+    const {
+      days,
+      leaveDays,
+      nonVegCharge,
+      vegCharge,
+      totalFoodCharge,
+      noonVegCharge,
+      roomCharge,
+      totalAmount,
+    } = req.body;
+
+    if (
+      !days ||
+      !leaveDays ||
+      !nonVegCharge ||
+      !vegCharge ||
+      !totalFoodCharge ||
+      !noonVegCharge ||
+      !roomCharge ||
+      !totalAmount
+    ) {
+      return res
+        .status(400)
+        .json({ error: "All fields are required for hostel mess details" });
+    }
+
+    const user = await registerDetails.findById(req.user.id);
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    // Push the new hostel mess details to the array
+    user.hostelMess.push({
+      days,
+      leaveDays,
+      nonVegCharge,
+      vegCharge,
+      totalFoodCharge,
+      noonVegCharge,
+      roomCharge,
+      totalAmount,
+    });
+
+    await user.save();
+
+    return res.status(200).json({ message: "Hostel mess details added" });
+  } catch (error) {
+    console.error("Server error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+app.get("/hostelmess/:id", middleware, async (req, res) => {
+  try {
+    const user = await registerDetails.findById(req.params.id);
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    if (!user.hostelMess) {
+      return res.status(404).json({ error: "Hostel mess details not found" });
+    }
+
+    return res.status(200).json({ data: user.hostelMess });
+  } catch (error) {
+    console.error("Server error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+// Edit hostel mess details route
+app.put("/hostelmess/:id", middleware, async (req, res) => {
+  try {
+    const {
+      days,
+      leaveDays,
+      nonVegCharge,
+      vegCharge,
+      totalFoodCharge,
+      noonVegCharge,
+      roomCharge,
+      totalAmount,
+    } = req.body;
+
+    if (
+      !days ||
+      !leaveDays ||
+      !nonVegCharge ||
+      !vegCharge ||
+      !totalFoodCharge ||
+      !noonVegCharge ||
+      !roomCharge ||
+      !totalAmount
+    ) {
+      return res
+        .status(400)
+        .json({ error: "All fields are required for hostel mess details" });
+    }
+
+    const user = await registerDetails.findById(req.params.id);
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    user.hostelMess = {
+      days,
+      leaveDays,
+      nonVegCharge,
+      vegCharge,
+      totalFoodCharge,
+      noonVegCharge,
+      roomCharge,
+      totalAmount,
+    };
+
+    await user.save();
+
+    return res.status(200).json({ message: "Hostel mess details updated" });
+  } catch (error) {
+    console.error("Server error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+app.get("/hostelmess", middleware, async (req, res) => {
+  try {
+    const usersWithMess = await registerDetails.find({
+      hostelMess: { $exists: true },
+    });
+
+    if (!usersWithMess || usersWithMess.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No hostel mess details found for any user" });
+    }
+
+    const messDetails = usersWithMess.map((user) => ({
+      userId: user._id,
+      hostelMess: user.hostelMess,
+    }));
+
+    return res.status(200).json(messDetails);
+  } catch (error) {
+    console.error("Server error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+// Remove hostel mess details route
+app.delete("/hostelmess/:id", middleware, async (req, res) => {
+  try {
+    const user = await registerDetails.findById(req.params.id);
+
+    if (!user) {
+      return res.status(400).json({ error: "User not found" });
+    }
+
+    if (!user.hostelMess) {
+      return res.status(404).json({ error: "Hostel mess details not found" });
+    }
+
+    user.hostelMess = undefined;
+
+    await user.save();
+
+    return res.status(200).json({ message: "Hostel mess details removed" });
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Server error" });

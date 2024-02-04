@@ -3,9 +3,9 @@ module.exports = function (req, res, next) {
   try {
     const token = req.header("x-token");
     if (!token) {
-      return res.status(4000).send("token not found");
+      return res.status(400).send("token not found");
     }
-    let decode = jwt.verify(token, "venkatesh");
+    let decode = jwt.verify(token, "svuhostel123");
     req.user = decode.user;
     next();
   } catch (error) {
