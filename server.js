@@ -385,6 +385,7 @@ app.put("/editprofile/:id", middleware, async (req, res) => {
 app.post("/hostelmess/:id", middleware, async (req, res) => {
   try {
     const userId = req.params.id;
+    // Extract hostel mess details from request body
     const {
       days,
       leaveDays,
@@ -395,7 +396,7 @@ app.post("/hostelmess/:id", middleware, async (req, res) => {
       roomCharge,
       totalAmount,
     } = req.body;
-
+    // Check if all required fields are provided
     if (
       !days ||
       !leaveDays ||
@@ -410,13 +411,11 @@ app.post("/hostelmess/:id", middleware, async (req, res) => {
         .status(400)
         .json({ error: "All fields are required for hostel mess details" });
     }
-
+    // Find user by ID
     const user = await registerDetails.findById(userId);
-
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
-
     // Push the new hostel mess details to the array
     user.hostelMess.push({
       days,
@@ -428,16 +427,13 @@ app.post("/hostelmess/:id", middleware, async (req, res) => {
       roomCharge,
       totalAmount,
     });
-
     await user.save();
-
     return res.status(200).json({ message: "Hostel mess details added" });
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Server error" });
   }
 });
-
 app.get("/hostelmess/:id", middleware, async (req, res) => {
   try {
     const user = await registerDetails.findById(req.params.id);
@@ -459,6 +455,8 @@ app.get("/hostelmess/:id", middleware, async (req, res) => {
 // Edit hostel mess details route
 app.put("/hostelmess/:id", middleware, async (req, res) => {
   try {
+    const userId = req.params.id;
+    // Extract updated hostel mess details from request body
     const {
       days,
       leaveDays,
@@ -469,7 +467,7 @@ app.put("/hostelmess/:id", middleware, async (req, res) => {
       roomCharge,
       totalAmount,
     } = req.body;
-
+    // Check if all required fields are provided
     if (
       !days ||
       !leaveDays ||
@@ -484,14 +482,21 @@ app.put("/hostelmess/:id", middleware, async (req, res) => {
         .status(400)
         .json({ error: "All fields are required for hostel mess details" });
     }
-
-    const user = await registerDetails.findById(req.params.id);
-
+    // Find user by ID
+    const user = await registerDetails.findById(userId);
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
-
-    user.hostelMess = {
+    // Find the index of the hostel mess details to update
+    const messIndex = user.hostelMess.findIndex(
+      (mess) => mess._id === req.body._id
+    );
+    if (messIndex === -1) {
+      return res.status(404).json({ error: "Hostel mess details not found" });
+    }
+    // Update the hostel mess details at the specified index
+    user.hostelMess[messIndex] = {
+      _id: req.body._id,
       days,
       leaveDays,
       nonVegCharge,
@@ -501,33 +506,8 @@ app.put("/hostelmess/:id", middleware, async (req, res) => {
       roomCharge,
       totalAmount,
     };
-
     await user.save();
-
     return res.status(200).json({ message: "Hostel mess details updated" });
-  } catch (error) {
-    console.error("Server error:", error);
-    return res.status(500).json({ error: "Server error" });
-  }
-});
-app.get("/hostelmess", middleware, async (req, res) => {
-  try {
-    const usersWithMess = await registerDetails.find({
-      hostelMess: { $exists: true },
-    });
-
-    if (!usersWithMess || usersWithMess.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No hostel mess details found for any user" });
-    }
-
-    const messDetails = usersWithMess.map((user) => ({
-      userId: user._id,
-      hostelMess: user.hostelMess,
-    }));
-
-    return res.status(200).json(messDetails);
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Server error" });
