@@ -382,8 +382,9 @@ app.put("/editprofile/:id", middleware, async (req, res) => {
   }
 });
 // Add hostel mess details route
-app.post("/hostelmess", middleware, async (req, res) => {
+app.post("/hostelmess/:id", middleware, async (req, res) => {
   try {
+    const userId = req.params.id;
     const {
       days,
       leaveDays,
@@ -410,7 +411,7 @@ app.post("/hostelmess", middleware, async (req, res) => {
         .json({ error: "All fields are required for hostel mess details" });
     }
 
-    const user = await registerDetails.findById(req.user.id);
+    const user = await registerDetails.findById(userId);
 
     if (!user) {
       return res.status(400).json({ error: "User not found" });
@@ -436,6 +437,7 @@ app.post("/hostelmess", middleware, async (req, res) => {
     return res.status(500).json({ error: "Server error" });
   }
 });
+
 app.get("/hostelmess/:id", middleware, async (req, res) => {
   try {
     const user = await registerDetails.findById(req.params.id);
