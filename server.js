@@ -453,10 +453,13 @@ app.get("/hostelmess/:id", middleware, async (req, res) => {
   }
 });
 // Edit hostel mess details route
+// Update hostel mess details route
+// Update hostel mess details route
 app.put("/hostelmess/:userId/:messId", middleware, async (req, res) => {
   try {
     const userId = req.params.userId;
     const messId = req.params.messId;
+
     // Extract updated hostel mess details from request body
     const {
       days,
@@ -468,6 +471,7 @@ app.put("/hostelmess/:userId/:messId", middleware, async (req, res) => {
       roomCharge,
       totalAmount,
     } = req.body;
+
     // Check if all required fields are provided
     if (
       !days ||
@@ -483,19 +487,9 @@ app.put("/hostelmess/:userId/:messId", middleware, async (req, res) => {
         .status(400)
         .json({ error: "All fields are required for hostel mess details" });
     }
-    // Find user by ID
-    const user = await registerDetails.findById(userId);
-    if (!user) {
-      return res.status(400).json({ error: "User not found" });
-    }
-    // Find the hostel mess details to update
-    const messIndex = user.hostelMess.findIndex((mess) => mess._id === messId);
-    if (messIndex === -1) {
-      return res.status(404).json({ error: "Hostel mess details not found" });
-    }
-    // Update the hostel mess details
-    user.hostelMess[messIndex] = {
-      _id: messId,
+
+    // Create an object with the updated hostel mess details
+    const updatedMessDetails = {
       days,
       leaveDays,
       nonVegCharge,
@@ -505,13 +499,27 @@ app.put("/hostelmess/:userId/:messId", middleware, async (req, res) => {
       roomCharge,
       totalAmount,
     };
-    await user.save();
-    return res.status(200).json({ message: "Hostel mess details updated" });
+
+    // Find user by ID and update the hostel mess details
+    const user = await registerDetails.findByIdAndUpdate(
+      userId,
+      { $set: { "hostelMess.$[messId]": updatedMessDetails } },
+      { new: true, arrayFilters: [{ "messId._id": messId }] }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Hostel mess details updated", user });
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Server error" });
   }
 });
+
 // Remove hostel mess details route
 app.delete("/hostelmess/:id", middleware, async (req, res) => {
   try {
