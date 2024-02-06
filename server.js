@@ -511,9 +511,13 @@ app.put("/hostelmess/:userId/:messId", middleware, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    // Return only the updated hostelMess details
     return res
       .status(200)
-      .json({ message: "Hostel mess details updated", user });
+      .json({
+        message: "Hostel mess details updated",
+        hostelMess: user.hostelMess,
+      });
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Server error" });
