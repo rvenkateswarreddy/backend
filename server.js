@@ -453,9 +453,10 @@ app.get("/hostelmess/:id", middleware, async (req, res) => {
   }
 });
 // Edit hostel mess details route
-app.put("/hostelmess/:id", middleware, async (req, res) => {
+app.put("/hostelmess/:userId/:messId", middleware, async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.params.userId;
+    const messId = req.params.messId;
     // Extract updated hostel mess details from request body
     const {
       days,
@@ -487,16 +488,14 @@ app.put("/hostelmess/:id", middleware, async (req, res) => {
     if (!user) {
       return res.status(400).json({ error: "User not found" });
     }
-    // Find the index of the hostel mess details to update
-    const messIndex = user.hostelMess.findIndex(
-      (mess) => mess._id === req.body._id
-    );
+    // Find the hostel mess details to update
+    const messIndex = user.hostelMess.findIndex((mess) => mess._id === messId);
     if (messIndex === -1) {
       return res.status(404).json({ error: "Hostel mess details not found" });
     }
-    // Update the hostel mess details at the specified index
+    // Update the hostel mess details
     user.hostelMess[messIndex] = {
-      _id: req.body._id,
+      _id: messId,
       days,
       leaveDays,
       nonVegCharge,
