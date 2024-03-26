@@ -512,12 +512,10 @@ app.put("/hostelmess/:userId/:messId", middleware, async (req, res) => {
     }
 
     // Return only the updated hostelMess details
-    return res
-      .status(200)
-      .json({
-        message: "Hostel mess details updated",
-        hostelMess: user.hostelMess,
-      });
+    return res.status(200).json({
+      message: "Hostel mess details updated",
+      hostelMess: user.hostelMess,
+    });
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Server error" });
@@ -542,6 +540,26 @@ app.delete("/hostelmess/:id", middleware, async (req, res) => {
     await user.save();
 
     return res.status(200).json({ message: "Hostel mess details removed" });
+  } catch (error) {
+    console.error("Server error:", error);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+// Add a route to retrieve details of a specific user profile
+app.get("/studentdetails/:registrationNumber", async (req, res) => {
+  try {
+    const registrationNumber = req.params.registrationNumber;
+
+    // Find the user profile based on the registration number
+    const userProfile = await registerDetails.findOne({
+      admissionNumber: registrationNumber,
+    });
+
+    if (!userProfile) {
+      return res.status(404).json({ error: "User profile not found" });
+    }
+
+    return res.status(200).json({ data: userProfile });
   } catch (error) {
     console.error("Server error:", error);
     return res.status(500).json({ error: "Server error" });
